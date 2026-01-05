@@ -76,6 +76,7 @@ def render_dashboard():
     html_content = re.sub(r'\{\{\s*score_color_class\s*\}\}', score_color, html_content)
     html_content = re.sub(r'\{\{\s*total_pending\s*\}\}', f"{total_pending:,}", html_content)
     html_content = re.sub(r'\{\{\s*critical_count\s*\}\}', f"{critical_count:,}", html_content)
+    # Regex replaces ALL occurrences, so the Alert Box will also be updated automatically.
     html_content = re.sub(r'\{\{\s*active_vans\s*\}\}', str(active_vans), html_content)
     html_content = re.sub(r'\{\{\s*cluster_rows\s*\}\}', table_html, html_content)
 
