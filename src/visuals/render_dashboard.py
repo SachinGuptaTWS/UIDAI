@@ -67,17 +67,18 @@ def render_dashboard():
         </tr>
         """
 
-    # 4. Inject into Template
+    # 4. Inject into Template (Using Regex for robustness against newlines/spaces)
     with open(TEMPLATE_FILE, 'r', encoding='utf-8') as t:
         html_content = t.read()
 
-    html_content = html_content.replace('{{ timestamp }}', datetime.now().strftime('%Y-%m-%d %H:%M'))
-    html_content = html_content.replace('{{ inclusion_score }}', str(inclusion_score))
-    html_content = html_content.replace('{{ score_color_class }}', score_color)
-    html_content = html_content.replace('{{ total_pending }}', f"{total_pending:,}")
-    html_content = html_content.replace('{{ critical_count }}', f"{critical_count:,}")
-    html_content = html_content.replace('{{ active_vans }}', str(active_vans))
-    html_content = html_content.replace('{{ cluster_rows }}', table_html)
+    import re
+    html_content = re.sub(r'\{\{\s*timestamp\s*\}\}', datetime.now().strftime('%Y-%m-%d %H:%M'), html_content)
+    html_content = re.sub(r'\{\{\s*inclusion_score\s*\}\}', str(inclusion_score), html_content)
+    html_content = re.sub(r'\{\{\s*score_color_class\s*\}\}', score_color, html_content)
+    html_content = re.sub(r'\{\{\s*total_pending\s*\}\}', f"{total_pending:,}", html_content)
+    html_content = re.sub(r'\{\{\s*critical_count\s*\}\}', f"{critical_count:,}", html_content)
+    html_content = re.sub(r'\{\{\s*active_vans\s*\}\}', str(active_vans), html_content)
+    html_content = re.sub(r'\{\{\s*cluster_rows\s*\}\}', table_html, html_content)
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         f.write(html_content)
