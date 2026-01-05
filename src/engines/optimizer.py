@@ -1,7 +1,8 @@
 """
 Engine 2: The "Route Optimizer" (Geospatial Machine Learning)
-Goal: Figure out exactly where to park the "Aadhaar on Wheels" vans.
-Model: K-Means Clustering (Unsupervised Learning)
+Model: Weighted K-Means Clustering.
+Input: Aggregated Pincode Data.
+Logic: Clusters Pincodes, weighted by the number of missing updates.
 """
 
 import pandas as pd
@@ -16,7 +17,7 @@ INPUT_FILE = r"C:\Users\SachinGupta\Downloads\SatatAadhar\data\processed\master_
 OUTPUT_FILE = r"C:\Users\SachinGupta\Downloads\SatatAadhar\data\outputs\route_clusters.json"
 
 def run_route_optimizer():
-    print("🚀 [Engine 2] Starting 'Route Optimizer' (K-Means)...")
+    print("🚀 [Engine 2] Starting 'Route Optimizer' (Weighted K-Means)...")
 
     if not os.path.exists(INPUT_FILE):
         print(f"❌ Error: processed data not found.")
@@ -24,60 +25,60 @@ def run_route_optimizer():
 
     df = pd.read_csv(INPUT_FILE)
     
-    # 1. Filter: Isolate "High Risk" (Red Zone)
-    # We only want to send vans to where ULI is high
-    red_zone_df = df[df['Risk_Category'] == 'CRITICAL'].copy()
+    # Filter for Critical Zones only? 
+    # Or cluster everyone but prioritize Critical?
+    # Let's focus on Critical + Warning to find "Hotspots"
+    risk_df = df[df['Risk_Category'].isin(['CRITICAL', 'WARNING'])].copy()
     
-    # Needs Lat/Long
-    red_zone_df = red_zone_df.dropna(subset=['Latitude', 'Longitude'])
+    # Calculate Weight: Number of people lagging
+    # Lag_Count ~ Enrolment * ULI (approx) or Enrolment - Update
+    # Let's use exact difference from previous step if available, or recompute
+    risk_df['Missing_Updates'] = risk_df['Enrolment_Count'] - risk_df['Update_Count']
+    risk_df['Weight'] = risk_df['Missing_Updates'].clip(lower=1) # Min weight 1
     
-    count = len(red_zone_df)
-    print(f"   🎯 Found {count} High-Risk Households with Geocodes.")
-    
-    if count < 10:
-        print("   ⚠️ Not enough data points for Clustering. Need at least 10.")
-        return
+    # Check if enough data
+    if len(risk_df) < 5:
+        print("   ⚠️ Not enough risk points. Using raw df.")
+        risk_df = df.copy()
+        risk_df['Weight'] = 1
 
-    # 2. Vectorize
-    X = red_zone_df[['Latitude', 'Longitude']].values
+    coord = risk_df[['Latitude', 'Longitude']].values
+    weights = risk_df['Weight'].values
     
-    # 3. Cluster
-    # How many vans? Let's say 1 Van per 500 households? 
-    # Or fixed number of clusters?
-    # Logic: n_clusters = count / 100 (capped at 50, min 1)
-    n_clusters = max(1, min(50, int(count / 100)))
-    if n_clusters == 0: n_clusters = 1
+    # Number of Vans
+    # Heuristic: 1 Van per 10,000 missing updates? Or fixed 10 vans for District?
+    total_lag = weights.sum()
+    n_clusters = max(3, min(20, int(total_lag / 5000))) 
     
-    print(f"   🚚 Optimizing for {n_clusters} Service Clusters...")
+    print(f"   🚚 Clustering {len(risk_df)} Pincodes (Total Lag: {int(total_lag)}) into {n_clusters} Routes...")
     
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-    kmeans.fit(X)
+    # Weighted K-Means!
+    kmeans.fit(coord, sample_weight=weights)
     
     centers = kmeans.cluster_centers_
-    labels = kmeans.labels_
+    # Labels for each pincode
+    risk_df['Cluster'] = kmeans.predict(coord)
     
-    # 4. Output Generation
-    # We want a JSON that Mapbox/Leaflet can read.
-    # List of Cluster Centers
-    
+    # Aggregate stats per cluster
     clusters_output = []
     
-    for i, center in enumerate(centers):
-        # Count points in this cluster
-        size = np.sum(labels == i)
+    for i in range(n_clusters):
+        cluster_grp = risk_df[risk_df['Cluster'] == i]
+        total_demand = cluster_grp['Weight'].sum()
         
         clusters_output.append({
-            "cluster_id": int(i),
-            "lat": float(center[0]),
-            "lng": float(center[1]),
-            "demand_size": int(size),
-            "status": "busiest" if size > 200 else "normal"
+            "cluster_id": int(i + 101), # ID 101, 102...
+            "lat": float(centers[i][0]),
+            "lng": float(centers[i][1]),
+            "demand_size": int(total_demand),
+            "status": "CRITICAL" if total_demand > 10000 else "HIGH"
         })
         
     full_payload = {
-        "algorithm": "K-Means Clustering",
+        "algorithm": "Weighted K-Means",
         "timestamp": pd.Timestamp.now().isoformat(),
-        "total_demand": int(count),
+        "total_demand": int(total_lag),
         "deployed_vans": int(n_clusters),
         "routes": clusters_output
     }
@@ -86,7 +87,7 @@ def run_route_optimizer():
     with open(OUTPUT_FILE, 'w') as f:
         json.dump(full_payload, f, indent=4)
         
-    print(f"   💾 Saved Route Clusters to: {OUTPUT_FILE}")
+    print(f"   💾 Saved Route Clusters.")
 
 if __name__ == "__main__":
     run_route_optimizer()

@@ -1,0 +1,116 @@
+{
+    "title": "Biometric Update Surge Forecast",
+    "model": "ARIMA(5,1,0)",
+    "data": [
+        {
+            "date": "2025-03",
+            "value": 19469780,
+            "type": "historical"
+        },
+        {
+            "date": "2025-04",
+            "value": 10157351,
+            "type": "historical"
+        },
+        {
+            "date": "2025-05",
+            "value": 9446243,
+            "type": "historical"
+        },
+        {
+            "date": "2025-06",
+            "value": 9584851,
+            "type": "historical"
+        },
+        {
+            "date": "2025-07",
+            "value": 12013267,
+            "type": "historical"
+        },
+        {
+            "date": "2025-08",
+            "value": 0,
+            "type": "historical"
+        },
+        {
+            "date": "2025-09",
+            "value": 13978988,
+            "type": "historical"
+        },
+        {
+            "date": "2025-10",
+            "value": 9593621,
+            "type": "historical"
+        },
+        {
+            "date": "2025-11",
+            "value": 16673107,
+            "type": "historical"
+        },
+        {
+            "date": "2025-12",
+            "value": 18141074,
+            "type": "historical"
+        },
+        {
+            "date": "2026-01",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-03",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-03",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-04",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-05",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-06",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-07",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-08",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-09",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-10",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-11",
+            "value": 18141072,
+            "type": "forecast"
+        },
+        {
+            "date": "2026-12",
+            "value": 18141072,
+            "type": "forecast"
+        }
+    ]
+}

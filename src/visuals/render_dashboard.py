@@ -1,7 +1,7 @@
 """
 VISUAL 4: Dynamic Dashboard Renderer
 Stitches REAL Data into the HTML Template.
-Ensures NO MOCK DATA exists in the final visual.
+Consumes Aggregated Pincode Data.
 """
 
 import pandas as pd
@@ -28,24 +28,33 @@ def render_dashboard():
     with open(CLUSTERS_FILE, 'r') as f:
         cluster_data = json.load(f)
 
-    # 2. Calculate Real Metrics
-    total_pending = len(df[df['ULI'] > 0.0]) # Any update needed?
-    # Or strict definition: ULI > 0.5
-    critical_count = len(df[df['Risk_Category'] == 'CRITICAL'])
+    # 2. Calculate Real Metrics (Population Level)
+    # Gap = Enrolment - Update
+    df['Gap'] = (df['Enrolment_Count'] - df['Update_Count']).clip(lower=0)
     
-    # Inclusion Score = 100 - (Critical/Total * 100 * Weight)
-    # Simple logic for now:
-    # 100 - (Avg ULI * 50)?
-    avg_uli = df['ULI'].mean()
-    inclusion_score = max(0, min(100, int(100 - (avg_uli * 40))))
+    total_pending = int(df['Gap'].sum())
     
+    # Critical Count = Gap in Pincodes marked as CRITICAL
+    critical_df = df[df['Risk_Category'] == 'CRITICAL']
+    critical_count = int(critical_df['Gap'].sum())
+    
+    # Inclusion Score
+    # Weighted by Pincode Population? 
+    # Let's derive it from % Update Compliance
+    # Compliance = Total Updates / Total Enrolment
+    total_enrol = df['Enrolment_Count'].sum()
+    if total_enrol > 0:
+        compliance_rate = df['Update_Count'].sum() / total_enrol
+        inclusion_score = int(compliance_rate * 100)
+    else:
+        inclusion_score = 0
+        
     score_color = "metric-red" if inclusion_score < 70 else "metric-green"
 
     active_vans = cluster_data.get('deployed_vans', 0)
     
     # 3. Generate Cluster Table Rows
     routes = cluster_data.get('routes', [])
-    # Sort by demand size desc
     sorted_routes = sorted(routes, key=lambda x: x['demand_size'], reverse=True)[:3]
     
     table_html = ""
@@ -59,10 +68,9 @@ def render_dashboard():
         """
 
     # 4. Inject into Template
-    with open(TEMPLATE_FILE, 'r') as t:
+    with open(TEMPLATE_FILE, 'r', encoding='utf-8') as t:
         html_content = t.read()
 
-    # Simple string replacement (No Jinja2 dependency needed for simplicity)
     html_content = html_content.replace('{{ timestamp }}', datetime.now().strftime('%Y-%m-%d %H:%M'))
     html_content = html_content.replace('{{ inclusion_score }}', str(inclusion_score))
     html_content = html_content.replace('{{ score_color_class }}', score_color)
@@ -71,11 +79,10 @@ def render_dashboard():
     html_content = html_content.replace('{{ active_vans }}', str(active_vans))
     html_content = html_content.replace('{{ cluster_rows }}', table_html)
 
-    with open(OUTPUT_FILE, 'w') as f:
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
     print(f"   ✅ Dashboard Rendered to: {OUTPUT_FILE}")
-    print("   Open this file in a browser to take the Final Screenshot.")
 
 if __name__ == "__main__":
     render_dashboard()

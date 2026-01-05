@@ -1,0 +1,29 @@
+{
+    "algorithm": "Weighted K-Means",
+    "timestamp": "2026-01-05T09:57:49.856104",
+    "total_demand": 1069,
+    "deployed_vans": 3,
+    "routes": [
+        {
+            "cluster_id": 101,
+            "lat": 25.498915692742695,
+            "lng": 91.6556118284637,
+            "demand_size": 1061,
+            "status": "HIGH"
+        },
+        {
+            "cluster_id": 102,
+            "lat": 24.5375,
+            "lng": 74.58060902777777,
+            "demand_size": 6,
+            "status": "HIGH"
+        },
+        {
+            "cluster_id": 103,
+            "lat": 16.25736666666667,
+            "lng": 77.523575,
+            "demand_size": 2,
+            "status": "HIGH"
+        }
+    ]
+}
