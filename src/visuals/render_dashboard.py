@@ -38,16 +38,15 @@ def render_dashboard():
     critical_df = df[df['Risk_Category'] == 'CRITICAL']
     critical_count = int(critical_df['Gap'].sum())
     
-    # Inclusion Score
-    # Weighted by Pincode Population? 
-    # Let's derive it from % Update Compliance
-    # Compliance = Total Updates / Total Enrolment
-    total_enrol = df['Enrolment_Count'].sum()
-    if total_enrol > 0:
-        compliance_rate = df['Update_Count'].sum() / total_enrol
-        inclusion_score = int(compliance_rate * 100)
-    else:
-        inclusion_score = 0
+    # Inclusion Score Logic (Fixed)
+    # 0 = Bad (High Lag), 100 = Perfect (No Lag)
+    # We use the average ULI (Update Lag Index) from the pincodes.
+    # ULI is already clipped 0-1 in the pipeline.
+    avg_uli = df['ULI'].mean()
+    inclusion_score = int((1 - avg_uli) * 100)
+    
+    # Safety cap just in case
+    inclusion_score = max(0, min(100, inclusion_score))
         
     score_color = "metric-red" if inclusion_score < 70 else "metric-green"
 
